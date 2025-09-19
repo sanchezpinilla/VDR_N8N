@@ -1,4 +1,4 @@
-name: Dividir PDF desde n8n
+name: Dividir PDF (OAuth usuario)
 
 on:
   repository_dispatch:
@@ -7,24 +7,29 @@ on:
 jobs:
   split:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout del código
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Configurar Python
-        uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      - name: Instalar dependencias
+      - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install google-api-python-client google-auth google-auth-oauthlib pypdf
 
-      - name: Ejecutar el script de división
+      - name: Run splitter
         env:
-          GDRIVE_SA_KEY: ${{ secrets.GDRIVE_SA_KEY }}
+          GOOGLE_CLIENT_ID:     ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           FILE_ID: ${{ github.event.client_payload.fileId }}
           START_PAGES: ${{ toJSON(github.event.client_payload.startPages) }}
           OUTPUT_FOLDER_ID: ${{ github.event.client_payload.outputFolderId }}
+          NAME_PREFIX: ${{ github.event.client_payload.namePrefix }}
         run: python split_pdf.py
+
