@@ -4,7 +4,7 @@ from io import BytesIO
 from pypdf import PdfReader, PdfWriter
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 def main():
     # Cargar variables desde GitHub Actions
@@ -18,6 +18,7 @@ def main():
         raise ValueError("Faltan variables de entorno.")
 
     start_pages = json.loads(start_pages_json)
+    start_pages = sorted(set(int(p) for p in json.loads(start_pages_json) if int(p) > 0))
     
     # Autenticar con Google Drive
     creds = Credentials.from_service_account_info(json.loads(gdrive_sa_key))
@@ -50,7 +51,7 @@ def main():
         output_pdf_stream.seek(0)
 
         new_file_name = f"{source_name}_{start}-{end_index}.pdf"
-        media = MediaFileUpload(output_pdf_stream, mimetype='application/pdf', resumable=True)
+        media = MediaIoBaseUpload(output_pdf_stream, mimetype='application/pdf', resumable=False)
         file_metadata = {'name': new_file_name, 'parents': [output_folder_id]}
         
         service.files().create(body=file_metadata, media_body=media, fields='id').execute()
